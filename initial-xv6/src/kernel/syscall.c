@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
+// int readcountvalue=0;
 
 // Fetch the uint64 at addr from the current process.
 int
@@ -102,6 +103,12 @@ extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_waitx(void);
+extern uint64 sys_getreadcount(void);
+extern uint64 sys_sigalarm(int ticks, void (*handler)());
+extern uint64 sys_sigreturn(void);
+
+
+
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -128,6 +135,10 @@ static uint64 (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_waitx]   sys_waitx,
+[SYS_getreadcount]   sys_getreadcount,
+[SYS_sigalarm]   (uint64 (*)(void)) sys_sigalarm,
+[SYS_sigreturn]   sys_sigreturn,
+
 };
 
 void
@@ -137,6 +148,12 @@ syscall(void)
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
+  // if(num==SYS_read){
+  //   readcountvalue++;
+  // }
+  if(num==SYS_read){
+    p->readcount=p->readcount+1;
+  }
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0

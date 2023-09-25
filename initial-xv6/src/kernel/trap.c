@@ -67,6 +67,25 @@ void usertrap(void)
   else if ((which_dev = devintr()) != 0)
   {
     // ok
+    // Check if it's a timer interrupt and an alarm is not already active
+if (which_dev == 2 && p->alarm == 0) {
+    // Save the current trapframe
+    p->alarm = 1;
+    struct trapframe *tf=kalloc();
+
+    memmove(tf, p->trapframe, sizeof(*tf));
+    p->alram_tf = tf;
+
+    // Increment cur_ticks
+    p->current_ticks++;
+
+    // Check if cur_ticks exceeds the specified maximum (ticks)
+    if (p->current_ticks >= p->ticks) {
+        // Set program counter (epc) to the alarm handler
+        p->trapframe->epc = p->handler;
+    }
+}
+
   }
   else
   {
