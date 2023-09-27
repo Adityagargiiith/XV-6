@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     int port = atoi(argv[1]);
 
     int sockfd;
-    struct sockaddr_in server_addr, client_addr;
+    struct sockaddr_in server_addr;
     char buffer[1024];
     socklen_t addr_size;
     int n;
@@ -36,48 +36,19 @@ int main(int argc, char **argv) {
     bzero(buffer,1024);// to clear the garbage
 
 
-    // int play_again = 1;
+    int play_again = 1;
 
-    while (1) {
+    // while (play_again) {
         int choice;
         printf("Enter your choice (0: Rock, 1: Paper, 2: Scissors): ");
         scanf("%s", buffer);
 
         sendto(sockfd, &buffer, sizeof(buffer), 0, (const struct sockaddr*)&server_addr, sizeof(server_addr));
-        printf("[+] Data send\n");
+        printf("[+] Data send");
         bzero(buffer,1024);
         addr_size = sizeof(server_addr);
         recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&server_addr, &addr_size);
-        printf("%s\n",buffer);
+        printf("%s",buffer);
 
-    //     int result;
-    //     recvfrom(sockfd, &result, sizeof(int), 0, NULL, NULL);
-
-    // addr_size = sizeof(client_addr);
-    //     recvfrom(sockfd2, buffer2, 1024, 0, (struct sockaddr*)&client_addr, &addr_size);
-
-    //     if (result == 0)
-    //         printf("It's a draw!\n");
-    //     else if (result == 1)
-    //         printf("You win!\n");
-    //     else
-    //         printf("You lose!\n");
-
-        printf("Do you want to play again? (1 for Yes, 0 for No): ");
-         bzero(buffer,1024);// to clear the garbage
-        scanf("%s", buffer);
-
-        // scanf("%d", &play_again);
-        sendto(sockfd, &buffer, sizeof(int), 0, (const struct sockaddr*)&server_addr, sizeof(server_addr));
-        bzero(buffer,1024);// to clear the garbage
-
-        recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&server_addr, &addr_size);
-        if(strcmp(buffer,"1")==0){
-            // printf("yes");
-            break;
-        }
-    }
-
-    // close(sockfd);
     return 0;
 }
