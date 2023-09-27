@@ -115,32 +115,3 @@ sys_getreadcount(void)
 {
   return myproc()->readcount;
 }
-uint64 
-sys_sigalarm(void)
-{
-  uint64 addr;
-  int ticks;
-  // if(argint(0,&ticks)<0)
-
-  //  if (argint(0,&ticks) < 0 || argaddr(1, &addr) < 0) {
-  //       return -1;
-  //   }
-  argint(0,&ticks);
-  argaddr(1,&addr);
-
-  myproc()->handler = addr;
-  myproc()->ticks = ticks;
-
-  return 0;
-}
-uint64 sys_sigreturn(void)
-{
-  struct proc *p = myproc();
-  memmove(p->trapframe, p->alram_tf, PGSIZE);
-
-  kfree(p->alram_tf);
-  p->alram_tf = 0;
-  p->alarm = 0;
-  p->current_ticks = 0;
-  return 0;
-}

@@ -33,7 +33,7 @@ prompt> ./test-getreadcounts.sh -s
 
 ---
 
-## Running Tests for sigalarm and sigreturn
+## Running Tests for sigalarm and sigreturnd
 
 **After implementing both sigalarm and sigreturn**, do the following:
 - Make the entry for `alarmtest` in `src/Makefile` inside `UPROGS`
