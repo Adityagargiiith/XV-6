@@ -107,12 +107,14 @@ int allocpid()
 static struct proc *
 allocproc(void)
 {
+  
   struct proc *p;
   p=kalloc();
   if(p==0){
     return 0;
   }
   p->current_ticks=0;
+
 
   for (p = proc; p < &proc[NPROC]; p++)
   {
@@ -466,6 +468,8 @@ int wait(uint64 addr)
 //    via swtch back to the scheduler.
 void scheduler(void)
 {
+
+
   struct proc *p;
   struct cpu *c = mycpu();
 
@@ -477,6 +481,7 @@ void scheduler(void)
 
     for (p = proc; p < &proc[NPROC]; p++)
     {
+      
       acquire(&p->lock);
       if (p->state == RUNNABLE)
       {

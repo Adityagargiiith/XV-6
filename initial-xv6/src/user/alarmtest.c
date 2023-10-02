@@ -46,6 +46,7 @@ void test0()
             break;
     }
     sigalarm(0, 0);
+    // sigreturn();
     if (count > 0)
     {
         printf("test0 passed\n");

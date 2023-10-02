@@ -115,3 +115,13 @@ getreadcount:
  li a7, SYS_getreadcount
  ecall
  ret
+.global sigalarm
+sigalarm:
+ li a7, SYS_sigalarm
+ ecall
+ ret
+.global sigreturn
+sigreturn:
+ li a7, SYS_sigreturn
+ ecall
+ ret

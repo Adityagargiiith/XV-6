@@ -1,70 +1,71 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
+#include <unistd.h>
 #include <arpa/inet.h>
-#include <time.h> // Added for random number generation
+#include <time.h>
 
-int main(int argc, char **argv) {
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 12345
+#define CHUNK_SIZE 32
+#define MAX_SEQ_NUM 100
 
-    if (argc != 2) {
-        printf("Usage: %s <port1> <port2>\n", argv[0]);
-        exit(0);
-    }
+// Custom packet structure
+typedef struct {
+    int seq_num;
+    char data[CHUNK_SIZE];
+} Packet;
 
-    char *ip = "127.0.0.1";
-    int port1 = atoi(argv[1]);
-    // int port2 = atoi(argv[2]);
+int main() {
+    int sockfd;
+    struct sockaddr_in server_addr;
+    socklen_t server_len = sizeof(server_addr);
 
-    int sockfd1, sockfd2;
-    struct sockaddr_in server_addr1, client_addr;
-    char buffer1[1024];
-
-    socklen_t addr_size;
-    int n;
-
-    sockfd1 = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd1 < 0) {
-        perror("[-]socket error for port 1");
+    // Create a UDP socket
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("socket");
         exit(1);
     }
 
+    // Initialize server address structure
+    memset(&server_addr, 0, server_len);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
-    memset(&server_addr1, '\0', sizeof(server_addr1));
-    server_addr1.sin_family = AF_INET;
-    server_addr1.sin_port = htons(port1);
-    server_addr1.sin_addr.s_addr = inet_addr(ip);
+    srand(time(NULL));
 
+    int next_seq_num = 0;
+    int expected_seq_num = 0;
 
-    n = bind(sockfd1, (struct sockaddr*)&server_addr1, sizeof(server_addr1));
-    if (n < 0) {
-        perror("[-]bind error for port 1");
-        exit(1);
+    while (1) {
+        // Simulate sending data
+        char data[CHUNK_SIZE];
+        snprintf(data, CHUNK_SIZE, "Chunk %d", next_seq_num);
+
+        Packet packet;
+        packet.seq_num = next_seq_num;
+        strncpy(packet.data, data, CHUNK_SIZE);
+
+        // Send the packet
+        sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&server_addr, server_len);
+
+        printf("Sent: SeqNum=%d Data=%s\n", next_seq_num, data);
+
+        // Simulate random ACK generation (50% probability)
+        if (rand() % 2 == 0) {
+            printf("Received ACK for SeqNum=%d\n", expected_seq_num);
+            expected_seq_num++;
+        }
+
+        // Simulate retransmission if needed
+        if (next_seq_num < expected_seq_num + 3) {
+            next_seq_num++;
+        }
+
+        sleep(1); // Simulate transmission delay
     }
 
-    
-    // while (1) {
-           bzero(buffer1, 1024);
-        addr_size = sizeof(client_addr);
-        recvfrom(sockfd1, buffer1, 1024, 0, (struct sockaddr*)&client_addr, &addr_size);
-        int choice1 = atoi(buffer1);
-        printf("[Client 1] Choice: %d\n", choice1);
-
-        // Receive choices from client 2
-    
-        
-        bzero(buffer1,1024);
-
-        // if (choice1 == 0 && choice2 == 0 || choice1 == 1 && choice2 == 1 || choice1 == 2 && choice2 == 2){
-        //     strcpy(buffer1,"Draw");
-            strcpy(buffer1,"Draw");
-            // printf("%s",resultA);
-
-            sendto(sockfd1, buffer1, 1024, 0, (const struct sockaddr*)&client_addr, sizeof(client_addr));
-            printf("Results send");
-        // }
-
+    close(sockfd);
     return 0;
 }

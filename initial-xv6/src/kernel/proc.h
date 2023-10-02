@@ -1,4 +1,5 @@
 // Saved registers for kernel context switches.
+#define FCFS 1
 struct context
 {
   uint64 ra;

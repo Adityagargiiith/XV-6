@@ -153,6 +153,7 @@ void usertrapret(void)
 // on whatever the current kernel stack is.
 void kerneltrap()
 {
+  
   int which_dev = 0;
   uint64 sepc = r_sepc();
   uint64 sstatus = r_sstatus();

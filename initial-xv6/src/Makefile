@@ -135,6 +135,7 @@ UPROGS=\
 	$U/_schedulertest\
 	$U/_test_1\
 	$U/_test_2\
+	$U/_alarmtest\
 
 
 
