@@ -3,9 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
+#include <time.h>
+
 
 #define CHUNK_SIZE 10 // Adjust the chunk size as needed
 #define MAX_CHUNKS 100
+#define TIMEOUT_SEC 0 // Timeout in seconds (0 for non-blocking)
+#define TIMEOUT_USEC 100000 
 struct Chunk {
     int sequence_number;
     char data[CHUNK_SIZE];
@@ -44,6 +49,9 @@ int sockfd;
   addr_size = sizeof(client_addr);
     struct Chunk received_chunks[MAX_CHUNKS];
     int received_count = 0;
+      fd_set read_fds;
+    struct timeval timeout;
+    int select_result;
 
     while (received_count < MAX_CHUNKS) {
         struct Chunk chunk;
@@ -53,6 +61,12 @@ int sockfd;
             perror("recvfrom");
             exit(1);
         }
+        int ack_sequence_number = chunk.sequence_number;
+        //  if (rand() % 3 != 0) {
+            // sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
+        sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
+        // }
+        printf("Acknowledged sent\n");
 
         received_chunks[chunk.sequence_number] = chunk;
         received_count++;
@@ -65,6 +79,21 @@ int sockfd;
             }
             printf("\n");
             break;
+        }
+        // Set up timeout for the next chunk reception
+        FD_ZERO(&read_fds);
+        FD_SET(sockfd, &read_fds);
+        timeout.tv_sec = TIMEOUT_SEC;
+        timeout.tv_usec = TIMEOUT_USEC;
+
+        select_result = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
+        if (select_result == -1) {
+            perror("select");
+            exit(1);
+        }
+        else if (select_result == 0) {
+            printf("Timeout occurred. Resending last ACK.\n");
+            sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
         }
     }
 

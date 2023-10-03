@@ -64,6 +64,18 @@ int main(int argc, char **argv) {
 
         // Send the chunk with its sequence number
         sendto(sockfd, &chunk, sizeof(chunk), 0, (struct sockaddr *)&addr, sizeof(addr));
+        int ack_sequence_number;
+        if (recvfrom(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, NULL, NULL) == -1) {
+            perror("recvfrom");
+            exit(1);
+        }
+        printf("Acknowledged recieved with number %d\n",ack_sequence_number);
+
+        // Check if the ACK matches the sequence number
+        if (ack_sequence_number != i) {
+            printf("Received incorrect ACK for sequence number %d\n", i);
+            // You can implement a retry mechanism here if needed
+        }
         
     }
     struct Chunk chunk;
