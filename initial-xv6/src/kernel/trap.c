@@ -68,23 +68,24 @@ void usertrap(void)
   {
     // ok
     // Check if it's a timer interrupt and an alarm is not already active
-if (which_dev == 2 && p->alarm == 0) {
-    // Save the current trapframe
-    p->alarm = 1;
-    struct trapframe *tf=kalloc();
+// if (which_dev == 2 && p->alarm == 0) {
+//     // Save the current trapframe
+//     p->alarm = 1;
+//     p->alram_tf=kalloc();
 
-    memmove(tf, p->trapframe, sizeof(*tf));
-    p->alram_tf = tf;
+//     memmove(p->alram_tf, p->trapframe, PGSIZE);
+//     // p->alram_tf = tf;
 
-    // Increment cur_ticks
-    p->current_ticks++;
+//     // Increment cur_ticks
+//     p->current_ticks++;
 
-    // Check if cur_ticks exceeds the specified maximum (ticks)
-    if (p->current_ticks >= p->ticks) {
-        // Set program counter (epc) to the alarm handler
-        p->trapframe->epc = p->handler;
-    }
-}
+//     // Check if cur_ticks exceeds the specified maximum (ticks)
+//     if (p->current_ticks%p->ticks==0) {
+//         // Set program counter (epc) to the alarm handler
+//         p->current_ticks=0;
+//         p->trapframe->epc = p->handler;
+//     }
+// }
 
   }
   else
@@ -98,8 +99,28 @@ if (which_dev == 2 && p->alarm == 0) {
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if (which_dev == 2)
+  if (which_dev == 2){
+    if (which_dev == 2 && p->alarm == 0) {
+    // Save the current trapframe
+    p->alarm = 1;
+    p->alram_tf=kalloc();
+
+    memmove(p->alram_tf, p->trapframe, PGSIZE);
+    // p->alram_tf = tf;
+
+    // Increment cur_ticks
+    p->current_ticks++;
+
+    // Check if cur_ticks exceeds the specified maximum (ticks)
+    if (p->current_ticks%p->ticks==0) {
+        // Set program counter (epc) to the alarm handler
+        p->current_ticks=0;
+        p->trapframe->epc = p->handler;
+    }
+}
+    
     yield();
+    }
 
   usertrapret();
 }

@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include <stddef.h>
 
 struct cpu cpus[NCPU];
 
@@ -113,8 +114,8 @@ allocproc(void)
   if(p==0){
     return 0;
   }
-  p->current_ticks=0;
 
+  p->current_ticks=0;
 
   for (p = proc; p < &proc[NPROC]; p++)
   {
@@ -134,7 +135,7 @@ found:
   p->pid = allocpid();
   p->readcount=0;    //Initializing read count to 0
   p->state = USED;
-
+p->creation_time=ticks;
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0)
   {
@@ -470,35 +471,53 @@ void scheduler(void)
 {
 
 
-  struct proc *p;
-  struct cpu *c = mycpu();
+  // struct proc *p=0;
+    struct cpu *c = mycpu();
+    c->proc = 0;
 
-  c->proc = 0;
-  for (;;)
-  {
-    // Avoid deadlock by ensuring that devices can interrupt.
-    intr_on();
-
-    for (p = proc; p < &proc[NPROC]; p++)
+    for(;;)
     {
-      
+          intr_on();
+        // sti();
+        struct proc *temp_proc = NULL;
+    for (struct proc *p = proc; p < &proc[NPROC]; p++)
+    {
+      // lock acquired
       acquire(&p->lock);
-      if (p->state == RUNNABLE)
+      if (p->state != RUNNABLE)
       {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+        release(&p->lock);
+        continue;
       }
+      else
+      {
+        if (!temp_proc)
+        {
+          temp_proc = p;
+          continue;
+        }
+        if (temp_proc->creation_time > p->creation_time)
+        {
+          // release the previous lock
+          temp_proc = p;
+          release(&temp_proc->lock);
+          continue;
+        }
+      }
+      // release the lock if proc is not choosen
       release(&p->lock);
     }
-  }
+    if (temp_proc)
+    {
+      temp_proc->state = RUNNING;
+      c->proc = temp_proc;
+      swtch(&c->context, &temp_proc->context);
+      c->proc = 0;
+      release(&temp_proc->lock);
+    }
+
+      
+    }
 }
 
 // Switch to scheduler.  Must hold only p->lock

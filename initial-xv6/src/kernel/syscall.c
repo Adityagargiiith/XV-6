@@ -191,8 +191,9 @@ uint64 sys_sigreturn(void)
   memmove(p->trapframe, p->alram_tf, PGSIZE);
 
   kfree(p->alram_tf);
-  p->alram_tf = 0;
+  // p->alram_tf = 0;
   p->alarm = 0;
   p->current_ticks = 0;
+  usertrapret();
   return 0;
 }
