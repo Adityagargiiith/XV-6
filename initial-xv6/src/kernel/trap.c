@@ -100,7 +100,7 @@ void usertrap(void)
 
   // give up the CPU if this is a timer interrupt.
   if (which_dev == 2){
-    if (which_dev == 2 && p->alarm == 0) {
+    // if (which_dev == 2 && p->alarm == 0) {
     // Save the current trapframe
     p->alarm = 1;
     p->alram_tf=kalloc();
@@ -117,7 +117,7 @@ void usertrap(void)
         p->current_ticks=0;
         p->trapframe->epc = p->handler;
     }
-}
+// }
     
     yield();
     }
