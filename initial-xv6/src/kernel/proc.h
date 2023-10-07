@@ -1,5 +1,4 @@
 // Saved registers for kernel context switches.
-#define FCFS 1
 struct context
 {
   uint64 ra;
@@ -104,29 +103,75 @@ struct proc
   int killed;           // If non-zero, have been killed
   int xstate;           // Exit status to be returned to parent's wait
   int pid;              // Process ID
-  int readcount;        // count for read directory.
 
   // wait_lock must be held when using this:
   struct proc *parent; // Parent process
-
+int readcallcount;
   // these are private to the process, so p->lock need not be held.
   uint64 kstack;               // Virtual address of kernel stack
   uint64 sz;                   // Size of process memory (bytes)
-  uint64 handler;              // address of handler
   pagetable_t pagetable;       // User page table
   struct trapframe *trapframe; // data page for trampoline.S
-  int ticks;
-  int current_ticks;
-  struct trapframe *alram_tf;
-  int alarm;
   struct context context;      // swtch() here to run process
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  uint creation_time;
   uint rtime;                  // How long the process ran for
   uint ctime;                  // When was the process created
-  uint etime;                  // When did the process exited
+  uint etime;
+  int ticksn;                  // ticks needed
+  int ticksp;                  // ticks used by program
+  int tickspa;                 // ticks passed till last alarm
+  int sigalarm;  
+  struct trapframe *trapcopy;
+  int is_sigalarm;
+  int clockval;
+  int completed_clockval;                  // When did the process exited
+  // #ifdef rr
+  int wait_time;                // ticks the process spent in runnable state
+  int used_tick;               // ticks used of the current time slice
+  int queue;                   // priority of the process 0
+  int time_init; 
+
+  uint64 mlfq_priority;
+  uint64 queued;
+  uint64 quantums_left;
+  uint64 runs_till_now;
+  uint64 queue_in_time;
+  uint64 queue_run_time[4];
+    uint64 run_time;
+      uint64 total_run_time;
+        uint64 sleep_time;
+    //  uint64 handler;
+  int ticks;
+  int cur_ticks;
+  struct trapframe *alarm_tf; // cache the trapframe when timer fires
+  int alarm_on;
+
+
+  uint64 age_queue[4];
+  // #endif
+  uint64 handler; // to store the handler function address
+      struct trapframe *cpy_trapframe;
+
+
 };
+typedef struct proc *queue_element;
+
+struct Queue
+{
+  unsigned int capacity;
+  int front;
+  int rear;
+  int numitems;
+  queue_element arr[NPROC + 1];
+};
+typedef struct Queue queue;
+
+queue Create_Queue();
+void enqueue(queue *qu, queue_element el);
+void dequeue(queue *qu);
+queue_element front(queue qu);
+int isempty(queue qu);
 
 extern struct proc proc[NPROC];

@@ -133,14 +133,11 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_schedulertest\
+	$U/_alarmtest\
 	$U/_test_1\
 	$U/_test_2\
-	$U/_alarmtest\
 
-
-
-
-
+	
 
 
 

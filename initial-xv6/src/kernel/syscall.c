@@ -6,8 +6,7 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
-int readcountvalue=0;
-
+int readcount=0;
 // Fetch the uint64 at addr from the current process.
 int
 fetchaddr(uint64 addr, uint64 *ip)
@@ -104,11 +103,8 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_waitx(void);
 extern uint64 sys_getreadcount(void);
-extern uint64 sys_sigalarm(int ticks, void (*handler)());
+extern uint64 sys_sigalarm(void);
 extern uint64 sys_sigreturn(void);
-
-
-
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -135,10 +131,9 @@ static uint64 (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_waitx]   sys_waitx,
-[SYS_getreadcount]   sys_getreadcount,  
-[SYS_sigalarm]   (uint64 (*)(void)) sys_sigalarm,
-[SYS_sigreturn]   sys_sigreturn,
-
+[SYS_getreadcount] sys_getreadcount,
+[SYS_sigalarm] sys_sigalarm,
+[SYS_sigreturn] sys_sigreturn,
 };
 
 void
@@ -148,14 +143,11 @@ syscall(void)
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
-  // if(num==SYS_read){
-  //   readcountvalue++;
-  // }
-  if(num==SYS_read){
-    readcountvalue++;
+   if (num==SYS_read){
+    readcount++; //my change
   }
-  if(num==SYS_getreadcount){
-    p->readcount=readcountvalue;
+  if (num==SYS_getreadcount){
+    p->readcallcount = readcount; //my change
   }
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
@@ -166,27 +158,4 @@ syscall(void)
             p->pid, p->name, num);
     p->trapframe->a0 = -1;
   }
-}
-
-uint64 
-sys_sigalarm(int ticks, void (*handler)())
-{
-  uint64 addr;
-  argint(0,&ticks);
-  argaddr(1,&addr);
-myproc()->alarm=0;
-  myproc()->handler = addr;
-  myproc()->ticks = ticks;
-
-  return 0;
-}
-
-uint64 sys_sigreturn(void)
-{
-  struct proc *p = myproc();
-  memmove(p->trapframe, p->alram_tf, sizeof(*(p->alram_tf)));
-  p->alarm = 0;
-  p->current_ticks = 0;
-  usertrapret();
-  return p->trapframe->a0;
 }

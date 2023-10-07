@@ -40,7 +40,7 @@ int main()
   28:	4981                	li	s3,0
   2a:	a079                	j	b8 <main+0xb8>
       }
-       printf("Process %d finished\n", n);
+      printf("Process %d finished\n", n);
       exit(0);
     }
   }
@@ -82,7 +82,7 @@ int main()
   80:	fc442783          	lw	a5,-60(s0)
   84:	2781                	sext.w	a5,a5
   86:	fef758e3          	bge	a4,a5,76 <main+0x76>
-       printf("Process %d finished\n", n);
+      printf("Process %d finished\n", n);
   8a:	85a6                	mv	a1,s1
   8c:	00001517          	auipc	a0,0x1
   90:	82450513          	addi	a0,a0,-2012 # 8b0 <malloc+0xf2>

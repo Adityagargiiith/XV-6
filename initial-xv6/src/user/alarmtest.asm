@@ -466,16 +466,20 @@ void test3()
 
     asm volatile("lui a5, 0");
  3ea:	000007b7          	lui	a5,0x0
-    asm volatile("addi a0, a5, 0xac" : : : "a0");
+    asm volatile("addi a0, a5, 0xac"
  3ee:	0ac78513          	addi	a0,a5,172 # ac <slow_handler+0x72>
  3f2:	1dcd67b7          	lui	a5,0x1dcd6
  3f6:	50078793          	addi	a5,a5,1280 # 1dcd6500 <base+0x1dcd54f0>
+                 :
+                 :
+                 : "a0");
     for (int i = 0; i < 500000000; i++)
  3fa:	37fd                	addiw	a5,a5,-1
  3fc:	fffd                	bnez	a5,3fa <test3+0x3a>
         ;
-    asm volatile("mv %0, a0" : "=r"(a0));
+    asm volatile("mv %0, a0"
  3fe:	872a                	mv	a4,a0
+                 : "=r"(a0));
 
     if (a0 != 0xac)
  400:	0ac00793          	li	a5,172

@@ -8,7 +8,6 @@
         "cstdlib": "c",
         "limits": "c",
         "spinlock.h": "c",
-        "proc.h": "c",
-        "stat.h": "c"
+        "proc.h": "c"
     }
 }

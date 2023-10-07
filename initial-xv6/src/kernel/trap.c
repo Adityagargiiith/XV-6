@@ -5,6 +5,8 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+extern queue MLFQ[4];
+#define fcfs
 
 struct spinlock tickslock;
 uint ticks;
@@ -67,26 +69,6 @@ void usertrap(void)
   else if ((which_dev = devintr()) != 0)
   {
     // ok
-    // Check if it's a timer interrupt and an alarm is not already active
-// if (which_dev == 2 && p->alarm == 0) {
-//     // Save the current trapframe
-//     p->alarm = 1;
-//     p->alram_tf=kalloc();
-
-//     memmove(p->alram_tf, p->trapframe, PGSIZE);
-//     // p->alram_tf = tf;
-
-//     // Increment cur_ticks
-//     p->current_ticks++;
-
-//     // Check if cur_ticks exceeds the specified maximum (ticks)
-//     if (p->current_ticks%p->ticks==0) {
-//         // Set program counter (epc) to the alarm handler
-//         p->current_ticks=0;
-//         p->trapframe->epc = p->handler;
-//     }
-// }
-
   }
   else
   {
@@ -99,29 +81,46 @@ void usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if (which_dev == 2){
-    // if (which_dev == 2 && p->alarm == 0) {
-    // Save the current trapframe
-    p->alarm = 1;
-    p->alram_tf=kalloc();
 
-    memmove(p->alram_tf, p->trapframe, PGSIZE);
-    // p->alram_tf = tf;
+  if (which_dev == 2)
+  {
+    // if(which_dev == 2){
+    //  if (which_dev == 2 && p->alarm_on == 0) {
+      // Save trapframe
+      if(p->ticks){
 
-    // Increment cur_ticks
-    p->current_ticks++;
+      p->cur_ticks ++;
+      if(p->alarm_on==0 && p->ticks >0 && p->cur_ticks>=p->ticks){
+        p->cur_ticks=0;
+        p->alarm_on=1;
+        p->alarm_tf=kalloc();
 
-    // Check if cur_ticks exceeds the specified maximum (ticks)
-    if (p->current_ticks%p->ticks==0) {
-        // Set program counter (epc) to the alarm handler
-        p->current_ticks=0;
+      memmove(p->alarm_tf, p->trapframe, PGSIZE);
         p->trapframe->epc = p->handler;
-    }
-// }
+      }
     
+      }
+    // }
+#ifdef rr
     yield();
+#endif
+#ifdef fcfs
+    yield();
+#endif
+#ifdef MLFQ
+    p = myproc();
+    if (p->state == RUNNING && p->quantums_left <= 0)
+    {
+      if (p->mlfq_priority <= 3)
+        p->mlfq_priority++;
+      yield();
     }
 
+    for (int i = 0; i < p->mlfq_priority; i++)
+      if (mlfq[i].numitems)
+        yield();
+#endif
+  }
   usertrapret();
 }
 
@@ -174,7 +173,6 @@ void usertrapret(void)
 // on whatever the current kernel stack is.
 void kerneltrap()
 {
-  
   int which_dev = 0;
   uint64 sepc = r_sepc();
   uint64 sstatus = r_sstatus();
@@ -193,9 +191,33 @@ void kerneltrap()
   }
 
   // give up the CPU if this is a timer interrupt.
+  // #ifndef fcfs
   if (which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
-    yield();
+  {
 
+#ifdef fcfs
+    // printf("shivam");
+    yield();
+#endif
+#ifdef mlfq
+  struct proc *p = myproc();
+    if (p->quantums_left <= 0)
+    {
+      if (p->mlfq_priority <= 3)
+        p->mlfq_priority++;
+      yield();
+    }
+
+    for (int i = 0; i < p->mlfq_priority; i++)
+      if (MLFQ[i].numitems)
+        yield();
+#endif
+#ifdef rr
+    yield();
+#endif
+  }
+  // yield();
+  // #endif
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
   w_sepc(sepc);

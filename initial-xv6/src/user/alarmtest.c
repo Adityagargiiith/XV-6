@@ -14,6 +14,7 @@ void dummy_handler();
 
 int main(int argc, char *argv[])
 {
+    // myproc()->tracy = 0;
     test0();
     test1();
     test2();
@@ -46,7 +47,6 @@ void test0()
             break;
     }
     sigalarm(0, 0);
-    // sigreturn();
     if (count > 0)
     {
         printf("test0 passed\n");
@@ -185,10 +185,14 @@ void test3()
     printf("test3 start\n");
 
     asm volatile("lui a5, 0");
-    asm volatile("addi a0, a5, 0xac" : : : "a0");
+    asm volatile("addi a0, a5, 0xac"
+                 :
+                 :
+                 : "a0");
     for (int i = 0; i < 500000000; i++)
         ;
-    asm volatile("mv %0, a0" : "=r"(a0));
+    asm volatile("mv %0, a0"
+                 : "=r"(a0));
 
     if (a0 != 0xac)
         printf("test3 failed: register a0 changed\n");
