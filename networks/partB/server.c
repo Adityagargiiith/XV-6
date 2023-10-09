@@ -8,7 +8,7 @@
 
 
 #define CHUNK_SIZE 10 // Adjust the chunk size as needed
-#define MAX_CHUNKS 10000
+#define MAX_CHUNKS 100
 #define TIMEOUT_SEC 0 // Timeout in seconds (0 for non-blocking)
 #define TIMEOUT_USEC 100000 
 struct Chunk {
@@ -21,7 +21,6 @@ int main(int argc, char** argv) {
     printf("Usage: %s <port>\n", argv[0]);
     exit(0);
   }
-
 
   char *ip = "127.0.0.1";
   int port = atoi(argv[1]);
@@ -53,99 +52,50 @@ int sockfd;
       fd_set read_fds;
     struct timeval timeout;
     int select_result;
-    // int array[1000;
-    // for(int i=0;i<1000;i++)
-    int chunksize;
-    ssize_t bytes_received=recvfrom(sockfd, &chunksize, sizeof(chunksize), 0, (struct sockaddr *)&client_addr, &addr_size);
-int sizeofchunk=chunksize;
-int *array=malloc(sizeof(int)*(sizeofchunk+5));
-    memset(array, 0, sizeof(array));
-// printf("%d",sizeofchunk);
+
     while (received_count < MAX_CHUNKS) {
         struct Chunk chunk;
-        // printf("%d",received_count);
         ssize_t bytes_received = recvfrom(sockfd, &chunk, sizeof(chunk), 0, (struct sockaddr *)&client_addr, &addr_size);
+
         if (bytes_received == -1) {
-            printf("recieved error");
+            perror("recvfrom");
             exit(1);
         }
-        // printf("%d",chunk.sequence_number);
-
         int ack_sequence_number = chunk.sequence_number;
-array[ack_sequence_number]=1;
-        // array[chunk.sequence_number]=1;
-        // array[chunk.sequence_number]=0;
         //  if (rand() % 3 != 0) {
             // sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
+        sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
         // }
+        printf("Acknowledged sent\n");
 
-
+        received_chunks[chunk.sequence_number] = chunk;
         received_count++;
 
         // Check if we have received all chunks
         if (chunk.sequence_number == -1) {
-            break;
-        }
-        sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
-        printf("Acknowledged sent \n");
-        received_chunks[chunk.sequence_number] = chunk;
-        
-    }
-    for (int i = 0; i < MAX_CHUNKS; i++) {
-    
-            // printf("Requesting retransmission for chunk %d\n", i);
-            struct Chunk chunk3;
-ssize_t bytes_received=recvfrom(sockfd, &chunk3, sizeof(chunk3), 0, (struct sockaddr *)&client_addr, &addr_size);
-        if (bytes_received == -1) {
-            printf("recieved error");
-            exit(1);
-        }
-        
-int ack_sequence_number = chunk3.sequence_number;
-array[ack_sequence_number]=1;
-        // array[chunk.sequence_number]=1;
-        // array[chunk.sequence_number]=0;
-        //  if (rand() % 3 != 0) {
-            // sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
-                        printf("Sending acknowledgment for chunk \n");
-
-        sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
-
-
-// printf("%d",chunk3.sequence_number);
-        received_count++;
-        if(chunk3.sequence_number==-2){
-            break;
-        }
-
-received_chunks[chunk3.sequence_number] = chunk3;
-      
-        
-    }
-    for (int i = 0; i < sizeofchunk; i++)
-    {
-        if (array[i] == 0)
-        {
-            printf("Sending acknowledgment for chunk \n");
-
-int ack_sequence_number=i;
-            sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
-
-            // printf("%s",request_packet.data);
-            // int ack_sequence_number;
-        // printf("Acknowledged recieved with number %d\n", ack_sequence_number);
-        }
-    }
-
-int ack_sequence_number=-2;
-            sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
-
-    printf("Received Data: ");
+            printf("Received Data: ");
             for (int i = 0; i < received_count-1; i++) {
                 printf("%s", received_chunks[i].data);
             }
             printf("\n");
+            break;
+        }
+        // Set up timeout for the next chunk reception
+        FD_ZERO(&read_fds);
+        FD_SET(sockfd, &read_fds);
+        timeout.tv_sec = TIMEOUT_SEC;
+        timeout.tv_usec = TIMEOUT_USEC;
 
+        select_result = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
+        if (select_result == -1) {
+            perror("select");
+            exit(1);
+        }
+        else if (select_result == 0) {
+            printf("Timeout occurred. Resending last ACK.\n");
+            sendto(sockfd, &ack_sequence_number, sizeof(ack_sequence_number), 0, (struct sockaddr *)&client_addr, addr_size);
+        }
+    }
 
     close(sockfd);
     return 0;

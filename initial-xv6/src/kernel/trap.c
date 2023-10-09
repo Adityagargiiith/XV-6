@@ -5,8 +5,11 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
-extern queue MLFQ[4];
-#define fcfs
+// extern queue MLFQ[4];
+//9 114
+//10 139
+
+// #define MLFQ
 
 struct spinlock tickslock;
 uint ticks;
@@ -104,22 +107,13 @@ void usertrap(void)
 #ifdef rr
     yield();
 #endif
-#ifdef fcfs
+#ifdef MLFQ
+if(p->change_queue<1 && p->queue_level !=3){
+    p->queue_level=p->queue_level+1;
+}
     yield();
 #endif
-#ifdef MLFQ
-    p = myproc();
-    if (p->state == RUNNING && p->quantums_left <= 0)
-    {
-      if (p->mlfq_priority <= 3)
-        p->mlfq_priority++;
-      yield();
-    }
 
-    for (int i = 0; i < p->mlfq_priority; i++)
-      if (mlfq[i].numitems)
-        yield();
-#endif
   }
   usertrapret();
 }
@@ -194,29 +188,8 @@ void kerneltrap()
   // #ifndef fcfs
   if (which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
   {
-
-#ifdef fcfs
-    // printf("shivam");
-    yield();
-#endif
-#ifdef mlfq
-  struct proc *p = myproc();
-    if (p->quantums_left <= 0)
-    {
-      if (p->mlfq_priority <= 3)
-        p->mlfq_priority++;
-      yield();
-    }
-
-    for (int i = 0; i < p->mlfq_priority; i++)
-      if (MLFQ[i].numitems)
-        yield();
-#endif
-#ifdef rr
-    yield();
-#endif
+  yield();
   }
-  // yield();
   // #endif
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.

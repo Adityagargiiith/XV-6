@@ -133,45 +133,31 @@ int readcallcount;
   int queue;                   // priority of the process 0
   int time_init; 
 
-  uint64 mlfq_priority;
-  uint64 queued;
-  uint64 quantums_left;
-  uint64 runs_till_now;
-  uint64 queue_in_time;
-  uint64 queue_run_time[4];
-    uint64 run_time;
-      uint64 total_run_time;
-        uint64 sleep_time;
-    //  uint64 handler;
+   uint sleeping_ticks;
+  uint running_ticks;
+  uint queue_level;
+  uint present_in_queue;
+  uint change_queue;
+  uint ticks_present;  //  uint64 handler;
   int ticks;
   int cur_ticks;
   struct trapframe *alarm_tf; // cache the trapframe when timer fires
   int alarm_on;
 
-
-  uint64 age_queue[4];
+  
   // #endif
   uint64 handler; // to store the handler function address
-      struct trapframe *cpy_trapframe;
+
 
 
 };
-typedef struct proc *queue_element;
-
-struct Queue
+typedef struct queue
 {
-  unsigned int capacity;
-  int front;
-  int rear;
-  int numitems;
-  queue_element arr[NPROC + 1];
-};
-typedef struct Queue queue;
-
-queue Create_Queue();
-void enqueue(queue *qu, queue_element el);
-void dequeue(queue *qu);
-queue_element front(queue qu);
-int isempty(queue qu);
-
-extern struct proc proc[NPROC];
+  struct proc *n[NPROC];
+  uint end;
+} queue;
+void popfront(queue *a);
+void pushback(queue *a, struct proc *x);
+struct proc *front(queue *a);
+int size(queue *a);
+void remove (queue *a, uint pid);
